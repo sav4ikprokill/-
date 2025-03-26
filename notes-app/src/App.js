@@ -4,7 +4,9 @@ import './App.css';
 function App() {
   const [notes, setNotes] = useState([]);
   const [note, setNote] = useState('');
+  const [tags, setTags] = useState('');
   const [editIndex, setEditIndex] = useState(null);
+  const [searchTag, setSearchTag] = useState('');
 
   useEffect(() => {
     // Загрузка заметок из локального хранилища при первом рендере
@@ -19,14 +21,16 @@ function App() {
 
   const handleAddOrEditNote = () => {
     if (note.trim()) {
+      const newNote = { text: note, tags: tags.split(',').map(tag => tag.trim()) };
       if (editIndex !== null) {
-        const updatedNotes = notes.map((n, index) => (index === editIndex ? note : n));
+        const updatedNotes = notes.map((n, index) => (index === editIndex ? newNote : n));
         setNotes(updatedNotes);
         setEditIndex(null);
       } else {
-        setNotes([...notes, note]);
+        setNotes([...notes, newNote]);
       }
       setNote('');
+      setTags('');
     }
   };
 
@@ -36,9 +40,14 @@ function App() {
   };
 
   const handleEditNote = (index) => {
-    setNote(notes[index]);
+    setNote(notes[index].text);
+    setTags(notes[index].tags.join(', '));
     setEditIndex(index);
   };
+
+  const filteredNotes = notes.filter(note =>
+    note.tags.some(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
+  );
 
   return (
     <div className="App">
@@ -50,14 +59,28 @@ function App() {
           onChange={(e) => setNote(e.target.value)}
           placeholder="Введите заметку"
         />
+        <input
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="Введите теги (через запятую)"
+        />
         <button onClick={handleAddOrEditNote}>
           {editIndex !== null ? 'Сохранить' : 'Добавить'}
         </button>
       </div>
+      <div>
+        <input
+          type="text"
+          value={searchTag}
+          onChange={(e) => setSearchTag(e.target.value)}
+          placeholder="Поиск по тегам"
+        />
+      </div>
       <ul>
-        {notes.map((note, index) => (
+        {filteredNotes.map((note, index) => (
           <li key={index}>
-            {note}
+            {note.text} (Теги: {note.tags.join(', ')})
             <button onClick={() => handleEditNote(index)}>Редактировать</button>
             <button onClick={() => handleDeleteNote(index)}>Удалить</button>
           </li>
@@ -68,3 +91,4 @@ function App() {
 }
 
 export default App;
+
